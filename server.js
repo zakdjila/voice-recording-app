@@ -3,7 +3,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const { parse } = require('csv-parse/sync');
-const { S3Client, PutObjectCommand, CopyObjectCommand, DeleteObjectCommand, ListObjectsV2Command, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, CopyObjectCommand, DeleteObjectCommand, ListObjectsV2Command, GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const rateLimit = require('express-rate-limit');
 const OpenAI = require('openai');
@@ -53,6 +53,11 @@ app.use(express.static('public', {
 let s3Client;
 const BUCKET_NAME = 'voice-recording-app';
 const REGION = 'us-east-1';
+const DEFAULT_TITLE_MODEL = process.env.OPENAI_TITLE_MODEL || 'gpt-4.1-mini';
+const AI_TITLE_ENABLED = process.env.ENABLE_AI_TITLES !== 'false';
+const AI_TITLE_TEMPERATURE = process.env.AI_TITLE_TEMPERATURE ? Number(process.env.AI_TITLE_TEMPERATURE) : 0.2;
+const AI_TITLE_MAX_TOKENS = process.env.AI_TITLE_MAX_TOKENS ? Number(process.env.AI_TITLE_MAX_TOKENS) : 20;
+const DEFAULT_TITLE_PROMPT = process.env.AI_TITLE_PROMPT || 'Summarize the following transcript in 1 to 4 words. Return only the concise title.';
 
 // Read AWS credentials from CSV file
 function loadAWSCredentials() {
@@ -109,6 +114,80 @@ function sanitizeFilename(filename) {
     .replace(/[^a-zA-Z0-9._-]/g, '_')
     .replace(/_{2,}/g, '_')
     .substring(0, 255);
+}
+
+function normalizeTitleForFilename(title) {
+  if (!title) {
+    return '';
+  }
+
+  return String(title)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .toLowerCase()
+    .trim();
+}
+
+function cleanGeneratedTitle(title) {
+  if (!title) {
+    return '';
+  }
+
+  const cleaned = String(title)
+    .replace(/["'`“”‘’]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const words = cleaned.split(' ').filter(Boolean).slice(0, 4);
+  return words.join(' ');
+}
+
+function buildCandidateFilename(baseName, extension) {
+  const candidate = baseName ? `${baseName}${extension}` : `recording${extension}`;
+  const sanitized = sanitizeFilename(candidate);
+  return sanitized || `recording${Date.now()}${extension}`;
+}
+
+async function objectExists(key) {
+  try {
+    await s3Client.send(new HeadObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: key
+    }));
+    return true;
+  } catch (error) {
+    const status = error.$metadata?.httpStatusCode;
+    if (status === 404 || status === 400 || error.name === 'NotFound' || error.Code === 'NotFound') {
+      return false;
+    }
+
+    // If access is denied or another error occurs, rethrow to surface the issue
+    throw error;
+  }
+}
+
+async function generateFilenameFromTitle(title, extension, currentKey) {
+  const normalizedBase = normalizeTitleForFilename(title) || 'recording';
+  let attempt = 0;
+  let candidateBase = normalizedBase;
+  let candidateFilename = buildCandidateFilename(candidateBase, extension);
+
+  while (await objectExists(`shared/${candidateFilename}`) && `shared/${candidateFilename}` !== currentKey) {
+    attempt += 1;
+    if (attempt > 20) {
+      candidateBase = `${normalizedBase}-${Date.now()}`;
+      candidateFilename = buildCandidateFilename(candidateBase, extension);
+      break;
+    }
+
+    candidateBase = `${normalizedBase}-${attempt}`;
+    candidateFilename = buildCandidateFilename(candidateBase, extension);
+  }
+
+  return candidateFilename;
 }
 
 // Utility function to validate audio file type
@@ -285,25 +364,90 @@ app.post('/api/transcribe', async (req, res) => {
     const audioFile = Buffer.from(buffer);
 
     // Create a temporary file
-    const filename = path.basename(fileUrl);
-    const tempFilePath = path.join('/tmp', filename);
+    const urlObject = new URL(fileUrl);
+    const originalFilename = path.basename(urlObject.pathname);
+    const tempFilePath = path.join('/tmp', originalFilename);
     fs.writeFileSync(tempFilePath, audioFile);
 
-    // Transcribe using OpenAI Whisper
-    const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(tempFilePath),
-      model: 'whisper-1',
-      language: 'en' // Helps with accuracy for English
-    });
+    let transcription;
 
-    // Clean up temp file
-    fs.unlinkSync(tempFilePath);
+    try {
+      // Transcribe using OpenAI Whisper
+      transcription = await openai.audio.transcriptions.create({
+        file: fs.createReadStream(tempFilePath),
+        model: 'whisper-1',
+        language: 'en' // Helps with accuracy for English
+      });
+    } finally {
+      try {
+        if (fs.existsSync(tempFilePath)) {
+          fs.unlinkSync(tempFilePath);
+        }
+      } catch (cleanupError) {
+        console.error('Failed to clean up temp file:', cleanupError);
+      }
+    }
+
+    let generatedTitle = null;
+    let updatedShareableUrl = fileUrl;
+    let updatedFilename = path.basename(urlObject.pathname);
+
+    if (AI_TITLE_ENABLED && transcription?.text) {
+      try {
+        const prompt = `${DEFAULT_TITLE_PROMPT}\n\nTranscript:\n${transcription.text}`;
+        const titleResponse = await openai.responses.create({
+          model: DEFAULT_TITLE_MODEL,
+          input: prompt,
+          max_output_tokens: AI_TITLE_MAX_TOKENS,
+          temperature: AI_TITLE_TEMPERATURE
+        });
+
+        const rawTitle = titleResponse.output_text || titleResponse.outputText || titleResponse.output?.[0]?.content?.[0]?.text || null;
+        generatedTitle = cleanGeneratedTitle(rawTitle);
+
+        if (generatedTitle) {
+          const currentKey = decodeURIComponent(urlObject.pathname.startsWith('/') ? urlObject.pathname.slice(1) : urlObject.pathname);
+
+          if (currentKey.startsWith('shared/')) {
+            const extension = path.extname(currentKey) || '.webm';
+            const newFilename = await generateFilenameFromTitle(generatedTitle, extension, currentKey);
+            const newKey = `shared/${newFilename}`;
+
+            if (newKey !== currentKey) {
+              try {
+                await s3Client.send(new CopyObjectCommand({
+                  Bucket: BUCKET_NAME,
+                  CopySource: `${BUCKET_NAME}/${currentKey}`,
+                  Key: newKey,
+                  MetadataDirective: 'COPY'
+                }));
+
+                await s3Client.send(new DeleteObjectCommand({
+                  Bucket: BUCKET_NAME,
+                  Key: currentKey
+                }));
+
+                updatedShareableUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${newKey}`;
+                updatedFilename = newFilename;
+              } catch (renameError) {
+                console.error('Failed to rename recording with AI title:', renameError);
+              }
+            }
+          }
+        }
+      } catch (titleError) {
+        console.error('Title generation error:', titleError);
+      }
+    }
 
     res.json({
       success: true,
-      transcription: transcription.text,
+      transcription: transcription?.text || '',
       language: 'en',
-      duration: null
+      duration: null,
+      title: generatedTitle,
+      filename: updatedFilename,
+      shareableUrl: updatedShareableUrl
     });
 
   } catch (error) {

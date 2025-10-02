@@ -31,6 +31,8 @@ const transcriptionSection = document.getElementById('transcriptionSection');
 const transcriptionLoading = document.getElementById('transcriptionLoading');
 const transcriptionText = document.getElementById('transcriptionText');
 const transcriptionActions = document.getElementById('transcriptionActions');
+const transcriptionTitle = document.getElementById('transcriptionTitle');
+const transcriptionTitleText = transcriptionTitle ? transcriptionTitle.querySelector('.title-text') : null;
 const copyTranscriptionBtn = document.getElementById('copyTranscriptionBtn');
 const downloadTranscriptionBtn = document.getElementById('downloadTranscriptionBtn');
 
@@ -41,6 +43,9 @@ let recordingStartTime = 0;
 let deleteTarget = null;
 let currentTranscription = null;
 let currentRecordingUrl = null;
+let currentRecordingTitle = null;
+let originalRecordingFilename = null;
+let aiTitleEnabled = true;
 
 /**
  * Initialize application
@@ -200,8 +205,9 @@ async function uploadRecording(blob, filename) {
     // Show success toast
     showToast(`Recording saved! <a href="${result.shareableUrl}" target="_blank" style="color: inherit; text-decoration: underline;">View</a>`, 'success');
 
-    // Store current recording URL for transcription
+    // Store recording metadata for transcription
     currentRecordingUrl = result.shareableUrl;
+    originalRecordingFilename = result.filename;
 
     // Automatically transcribe the recording
     setTimeout(async () => {
@@ -548,6 +554,12 @@ async function transcribeRecording(fileUrl) {
     transcriptionLoading.style.display = 'flex';
     transcriptionText.style.display = 'none';
     transcriptionActions.style.display = 'none';
+    if (transcriptionTitle) {
+      transcriptionTitle.style.display = 'none';
+      if (transcriptionTitleText) {
+        transcriptionTitleText.textContent = '';
+      }
+    }
 
     // Call transcription API
     const response = await fetch('http://localhost:3001/api/transcribe', {
@@ -565,12 +577,30 @@ async function transcribeRecording(fileUrl) {
 
     const result = await response.json();
     currentTranscription = result.transcription;
+    currentRecordingTitle = result.title || null;
+
+    if (result.shareableUrl) {
+      currentRecordingUrl = result.shareableUrl;
+    }
+
+    if (result.filename) {
+      originalRecordingFilename = result.filename;
+    }
 
     // Display transcription
     transcriptionLoading.style.display = 'none';
     transcriptionText.style.display = 'block';
     transcriptionText.textContent = result.transcription;
     transcriptionActions.style.display = 'flex';
+
+    if (transcriptionTitle && transcriptionTitleText) {
+      if (currentRecordingTitle) {
+        transcriptionTitleText.textContent = currentRecordingTitle;
+      transcriptionTitle.style.display = 'inline-flex';
+      } else {
+        transcriptionTitle.style.display = 'none';
+      }
+    }
 
     showToast('Transcription complete!', 'success');
 
@@ -590,6 +620,13 @@ async function transcribeRecording(fileUrl) {
         ${error.message.includes('OpenAI API key') ? '<div style="margin-top: 12px; font-size: 0.875rem; color: var(--text-secondary);">Please set the OPENAI_API_KEY environment variable and restart the server.</div>' : ''}
       </div>
     `;
+
+    if (transcriptionTitle) {
+      transcriptionTitle.style.display = 'none';
+      if (transcriptionTitleText) {
+        transcriptionTitleText.textContent = '';
+      }
+    }
   }
 }
 
