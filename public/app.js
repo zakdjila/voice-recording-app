@@ -596,7 +596,7 @@ async function transcribeRecording(fileUrl) {
     if (transcriptionTitle && transcriptionTitleText) {
       if (currentRecordingTitle) {
         transcriptionTitleText.textContent = currentRecordingTitle;
-      transcriptionTitle.style.display = 'inline-flex';
+        transcriptionTitle.style.display = 'inline-flex';
       } else {
         transcriptionTitle.style.display = 'none';
       }

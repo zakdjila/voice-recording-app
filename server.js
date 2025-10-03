@@ -7,6 +7,7 @@ const { S3Client, PutObjectCommand, CopyObjectCommand, DeleteObjectCommand, List
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const rateLimit = require('express-rate-limit');
 const OpenAI = require('openai');
+const { spawn } = require('child_process');
 
 // Load environment variables from .env file if it exists
 if (fs.existsSync('.env')) {
@@ -51,6 +52,7 @@ app.use(express.static('public', {
 
 // AWS Configuration
 let s3Client;
+let awsCredentials = null;
 const BUCKET_NAME = 'voice-recording-app';
 const REGION = 'us-east-1';
 const DEFAULT_TITLE_MODEL = process.env.OPENAI_TITLE_MODEL || 'gpt-4.1-mini';
@@ -58,6 +60,9 @@ const AI_TITLE_ENABLED = process.env.ENABLE_AI_TITLES !== 'false';
 const AI_TITLE_TEMPERATURE = process.env.AI_TITLE_TEMPERATURE ? Number(process.env.AI_TITLE_TEMPERATURE) : 0.2;
 const AI_TITLE_MAX_TOKENS = process.env.AI_TITLE_MAX_TOKENS ? Number(process.env.AI_TITLE_MAX_TOKENS) : 20;
 const DEFAULT_TITLE_PROMPT = process.env.AI_TITLE_PROMPT || 'Summarize the following transcript in 1 to 4 words. Return only the concise title.';
+const AUDIO_ENHANCEMENT_ENABLED = process.env.ENABLE_AUDIO_ENHANCEMENT === 'true';
+const AUDIO_ENHANCEMENT_SCRIPT = process.env.AUDIO_ENHANCEMENT_SCRIPT || path.join(__dirname, 'scripts', 'enhance_audio.py');
+const AUDIO_ENHANCEMENT_OUTPUT_SUFFIX = process.env.AUDIO_ENHANCEMENT_OUTPUT_SUFFIX || '-enhanced';
 
 // Read AWS credentials from CSV file
 function loadAWSCredentials() {
@@ -93,6 +98,21 @@ function loadAWSCredentials() {
         secretAccessKey: secretAccessKey
       }
     });
+
+    awsCredentials = { accessKeyId, secretAccessKey };
+
+    if (!process.env.AWS_ACCESS_KEY_ID) {
+      process.env.AWS_ACCESS_KEY_ID = accessKeyId;
+    }
+    if (!process.env.AWS_SECRET_ACCESS_KEY) {
+      process.env.AWS_SECRET_ACCESS_KEY = secretAccessKey;
+    }
+    if (!process.env.AWS_REGION) {
+      process.env.AWS_REGION = REGION;
+    }
+    if (!process.env.AWS_DEFAULT_REGION) {
+      process.env.AWS_DEFAULT_REGION = REGION;
+    }
 
     console.log('✓ AWS credentials loaded successfully');
     return true;
@@ -190,6 +210,78 @@ async function generateFilenameFromTitle(title, extension, currentKey) {
   return candidateFilename;
 }
 
+function spawnAudioEnhancer(options) {
+  return new Promise((resolve, reject) => {
+    const {
+      key,
+      bucket,
+      region,
+      outputSuffix = AUDIO_ENHANCEMENT_OUTPUT_SUFFIX,
+      contentType,
+      overwrite = false
+    } = options;
+
+    if (!AUDIO_ENHANCEMENT_ENABLED) {
+      return resolve({ success: false, reason: 'disabled' });
+    }
+
+    if (!fs.existsSync(AUDIO_ENHANCEMENT_SCRIPT)) {
+      console.warn('Audio enhancement script not found:', AUDIO_ENHANCEMENT_SCRIPT);
+      return resolve({ success: false, reason: 'script_missing' });
+    }
+
+    const pythonExecutable = process.env.PYTHON || 'python3';
+    const args = [
+      AUDIO_ENHANCEMENT_SCRIPT,
+      '--bucket', bucket,
+      '--region', region,
+      '--key', key,
+      '--output-suffix', outputSuffix,
+      '--overwrite', overwrite ? 'true' : 'false'
+    ];
+
+    if (contentType) {
+      args.push('--content-type', contentType);
+    }
+
+    const child = spawn(pythonExecutable, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, AUDIO_ENHANCEMENT: '1' }
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    child.on('error', (spawnError) => {
+      console.error('Failed to start audio enhancement process:', spawnError);
+      reject(spawnError);
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const parsed = stdout ? JSON.parse(stdout) : {};
+          resolve({ success: true, output: parsed, raw: stdout });
+        } catch (parseError) {
+          console.warn('Audio enhancement JSON parse error:', parseError);
+          resolve({ success: true, output: null, raw: stdout });
+        }
+      } else {
+        console.error('Audio enhancement failed:', { code, stdout, stderr });
+        resolve({ success: false, reason: 'process_failed', code, stdout, stderr });
+      }
+    });
+  });
+}
+
 // Utility function to validate audio file type
 function isValidAudioFile(filename) {
   const validExtensions = ['.webm', '.mp3', '.wav', '.ogg', '.m4a'];
@@ -271,6 +363,24 @@ app.post('/api/move-to-shared', async (req, res) => {
       shareableUrl,
       filename: sanitizedFilename
     });
+
+    // Fire-and-forget audio enhancement
+  if (AUDIO_ENHANCEMENT_ENABLED) {
+    spawnAudioEnhancer({
+      key: destinationKey,
+      bucket: BUCKET_NAME,
+      region: REGION,
+      overwrite: false
+    }).then((result) => {
+      if (!result.success) {
+        console.warn('Audio enhancement skipped or failed for', destinationKey, result.reason || result);
+      } else {
+        console.log('Audio enhancement triggered for', destinationKey);
+      }
+    }).catch((enhancementError) => {
+      console.error('Audio enhancement error for', destinationKey, enhancementError);
+    });
+  }
   } catch (error) {
     console.error('Error moving file to shared:', error);
     res.status(500).json({ error: 'Failed to move file to shared folder' });
@@ -392,7 +502,7 @@ app.post('/api/transcribe', async (req, res) => {
     let updatedShareableUrl = fileUrl;
     let updatedFilename = path.basename(urlObject.pathname);
 
-    if (AI_TITLE_ENABLED && transcription?.text) {
+  if (AI_TITLE_ENABLED && transcription?.text) {
       try {
         const prompt = `${DEFAULT_TITLE_PROMPT}\n\nTranscript:\n${transcription.text}`;
         const titleResponse = await openai.responses.create({
