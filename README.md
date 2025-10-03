@@ -1,399 +1,768 @@
 # 🎙️ Voice Recording App
 
-A beautiful, user-friendly web application that lets you record your voice, save it to the cloud, and turn your words into text using artificial intelligence.
-
----
+A beautiful, modern web application that lets you record your voice, automatically transcribe it using AI, and save everything to the cloud. Think of it as your personal voice memo app, but supercharged with artificial intelligence!
 
 ## 🌟 What Does This App Do?
 
-Think of this app as your personal voice assistant that lives in your web browser. Here's what makes it special:
+Imagine this: You click a button, speak into your microphone, and when you're done, the app automatically:
+- Saves your audio recording to the cloud (Amazon S3)
+- Transcribes what you said into text using OpenAI's Whisper AI
+- Gives you a shareable link so others can listen to your recording
+- Lets you copy or download the transcription
 
-### **Record Your Voice Anywhere**
-Simply click a button, speak into your device's microphone, and the app captures crystal-clear audio. Whether you're:
-- Recording quick voice memos
-- Capturing meeting notes
-- Saving ideas on the go
-- Creating audio diaries
+All with a gorgeous, glass-like interface that works on both light and dark themes!
 
-The app makes it effortless.
+## 🎯 Perfect For
 
-### **Automatic Cloud Backup**
-Every recording you make is instantly saved to Amazon's secure cloud storage (called S3). This means:
-- Your recordings are safe even if your device breaks
-- You can access them from any device
-- You never have to worry about running out of space on your phone or computer
-- Each recording gets its own unique web address that you can share with anyone
+- **Voice Notes**: Quick thoughts you want to capture and transcribe
+- **Interviews**: Record conversations and get instant transcriptions
+- **Meeting Notes**: Record meetings and get searchable text
+- **Content Creation**: Create audio content with automatic subtitles/transcripts
+- **Language Learning**: Practice speaking and see what you said in text
+- **Accessibility**: Convert spoken words to written text
 
-### **AI-Powered Transcription**
-The app uses OpenAI's cutting-edge technology to convert your spoken words into written text. Within seconds of finishing a recording:
-- The audio is sent to OpenAI's Whisper AI (the same technology that powers many voice assistants)
-- Whisper "listens" to your recording and types out every word
-- You get a complete, accurate transcript that you can copy, download, or share
+## 🚀 How It Works (The Simple Explanation)
 
-### **Smart Titles for Your Recordings**
-Here's where it gets really clever: The app reads your transcript and automatically creates a short, descriptive title for your recording. For example:
-- If you recorded a grocery list, it might name it "grocery-shopping-list"
-- If you recorded meeting notes, it might call it "team-meeting-notes"
-- If you shared a quick idea, it might name it "new-project-idea"
+### The Recording Process
 
-This makes it incredibly easy to find and organize your recordings later.
+1. **You Click "Record"**
+   - The app asks your browser for permission to use your microphone (just once)
+   - A beautiful gradient button starts pulsing to show it's recording
 
----
+2. **You Speak**
+   - The app captures your voice in real-time
+   - You see a waveform animation showing it's working
+   - Your audio is being saved in high-quality format (WebM or MP4)
 
-## 🎨 Beautiful Design Features
+3. **You Click "Stop"**
+   - The recording stops and gets packaged up
+   - The app creates a temporary audio file on your computer
 
-### **Dark Mode & Light Mode**
-The app automatically adapts to your preference:
-- **Light mode** features soft, frosted glass effects with gentle shadows
-- **Dark mode** offers a sleek, modern interface that's easy on the eyes at night
-- Both themes are carefully designed to be beautiful and easy to read
+4. **Automatic Upload to Cloud**
+   - The app sends your audio file to Amazon S3 (a cloud storage service)
+   - You see a progress bar showing the upload percentage
+   - Once uploaded, the file gets a permanent URL (web address)
 
-### **Visual Recording Feedback**
-When you're recording, the app comes alive with:
-- A pulsing red recording indicator
-- A real-time timer showing how long you've been recording
-- Animated waveforms that react to your voice
-- Beautiful color animations that create an engaging experience
+5. **AI Transcription Magic** ✨
+   - The app sends your audio to OpenAI's Whisper AI
+   - Whisper "listens" to your recording and writes down what you said
+   - This happens in seconds, even for longer recordings
+   - The transcription appears in a beautiful card below your recording
 
-### **Organized Recording Library**
-All your recordings appear in an elegant list showing:
-- When each recording was made
-- How long each recording is
-- Quick action buttons to play, download, share, or delete
-- A search feature to find specific recordings instantly
+6. **Done!**
+   - You can play back your recording
+   - Copy the transcription to your clipboard
+   - Download the transcription as a text file
+   - Share the recording URL with others
 
----
+## 🏗️ The Technology Stack (What's Under the Hood)
 
-## 🔧 How It Works Behind The Scenes
+### Frontend (What You See and Interact With)
 
-### **Step 1: Recording**
-When you click the record button:
-1. Your browser asks permission to use your microphone
-2. The app starts capturing audio in high-quality WebM format
-3. As you speak, the audio data is temporarily stored in your browser's memory
-4. When you click stop, all that audio data is packaged into a single file
+- **HTML/CSS/JavaScript**: The basic building blocks of web pages
+  - `index.html`: The structure of the page
+  - `styles.css`: All the beautiful colors, animations, and layouts
+  - `app.js`: The main controller that coordinates everything
 
-### **Step 2: Cloud Upload**
-Once recording stops:
-1. The audio file is sent to the app's server (a computer program running on your machine)
-2. The server connects to Amazon S3 (a massive digital warehouse where millions of websites store files)
-3. Your recording is uploaded to S3 with a unique identifier
-4. S3 generates a special web link that anyone can use to listen to your recording
-5. The server sends this link back to your browser
+- **Specialized JavaScript Modules**:
+  - `recorder.js`: Handles microphone access and audio recording
+  - `uploader.js`: Manages file uploads to the cloud
+  - `player.js`: Controls audio playback
 
-### **Step 3: AI Transcription**
-Immediately after upload:
-1. The app sends your recording's web link to OpenAI's servers
-2. OpenAI downloads your audio and runs it through their Whisper AI model
-3. Whisper analyzes the sound patterns, recognizes speech, and converts it to text
-4. The transcript is sent back to the app
-5. The app displays the transcript in a beautiful, readable format
+### Backend (The Behind-the-Scenes Server)
 
-### **Step 4: AI Title Generation**
-After transcription completes:
-1. The app sends your transcript to OpenAI's language model (GPT)
-2. The AI reads your transcript and creates a 1-4 word summary
-3. The app converts this title into a web-friendly format (lowercase, hyphens instead of spaces)
-4. The recording file is automatically renamed in S3 using this new title
-5. The title appears in your interface so you can easily identify the recording
+- **Node.js**: A JavaScript runtime that lets us run code on a server
+- **Express**: A framework that makes it easy to create web servers
+  - Think of it as a traffic controller for web requests
 
----
+### Cloud Services (The External Helpers)
 
-## 📋 What You Need To Get Started
+1. **Amazon S3 (Simple Storage Service)**
+   - Where all your audio recordings live permanently
+   - Like Dropbox or Google Drive, but specifically for this app
+   - Each recording gets a unique URL that never changes
 
-### **1. Node.js (The Engine)**
-Node.js is like the engine that powers the app. It's a program that lets your computer run JavaScript code outside of a web browser.
-- You need version 18 or newer
-- Download it from [nodejs.org](https://nodejs.org)
-- After installing, you can check if it worked by opening a terminal and typing `node --version`
+2. **OpenAI Whisper**
+   - An AI model trained on 680,000 hours of speech
+   - Incredibly accurate at converting speech to text
+   - Understands multiple languages automatically
 
-### **2. OpenAI API Key (The AI Brain)**
-This is your personal password to use OpenAI's artificial intelligence services:
-- Sign up at [OpenAI's website](https://platform.openai.com)
-- Go to the API section and create an API key
-- This key lets the app use Whisper (for transcription) and GPT (for titles)
-- Keep this key secret—it's like a password to your OpenAI account
+## 🔧 Technical Deep Dive (For the Curious)
 
-### **3. AWS Account & Credentials (The Cloud Storage)**
-Amazon Web Services (AWS) is where your recordings are stored:
-- Create a free AWS account at [aws.amazon.com](https://aws.amazon.com)
-- Set up S3 (Simple Storage Service)—it's like renting a digital storage unit
-- Create an "access key" which is like a key to your storage unit
-- Download the credentials file (it looks like a spreadsheet with your access codes)
+### How Recording Works
 
----
+```
+1. Browser MediaRecorder API
+   ↓
+2. Captures audio chunks every second
+   ↓
+3. Stores chunks in an array
+   ↓
+4. On stop: combines all chunks into one Blob (binary data)
+   ↓
+5. Creates a local URL to preview the recording
+```
 
-## 🚀 Setting Up The App
+**Why This Matters**: The MediaRecorder API is built into modern browsers. It handles all the complex audio encoding for you. The app just asks for chunks of data and stitches them together like a puzzle.
 
-### **Step 1: Download The Code**
-Get the app files onto your computer by either:
-- Downloading the ZIP file from GitHub
-- Or, if you know Git: `git clone <repository-url>`
+### How Upload Works
 
-### **Step 2: Install Dependencies**
-Dependencies are pre-built tools and libraries the app needs to function. Open a terminal in the app folder and run:
+```
+1. Audio Blob gets converted to a File object
+   ↓
+2. File is sent via HTTP POST to /api/upload
+   ↓
+3. Server receives the file using Multer (a file upload handler)
+   ↓
+4. Server generates a unique filename with timestamp
+   ↓
+5. Server uses AWS SDK to send file to S3 bucket
+   ↓
+6. S3 returns a permanent URL
+   ↓
+7. Server sends URL back to browser
+   ↓
+8. Browser displays the recording with playback controls
+```
+
+**Why This Matters**: Files don't upload instantly—they're broken into packets and sent over the internet. The progress bar is calculated by tracking how many bytes have been sent versus the total file size.
+
+### How Transcription Works
+
+```
+1. Browser sends the audio URL to /api/transcribe
+   ↓
+2. Server downloads the audio file from S3
+   ↓
+3. Server sends audio to OpenAI's Whisper API
+   ↓
+4. Whisper processes the audio:
+   - Converts audio to mel-spectrogram (visual representation of sound)
+   - Runs it through a neural network trained on speech
+   - Generates text word by word with confidence scores
+   ↓
+5. Whisper returns JSON with transcription + metadata
+   ↓
+6. Server sends transcription back to browser
+   ↓
+7. Browser displays the text in a beautiful card
+```
+
+**Why This Matters**: Whisper doesn't just "hear" your words—it understands context, accents, and can even handle background noise. It's the same technology that powers professional transcription services.
+
+### How the Beautiful UI Works
+
+The app uses a design technique called **glassmorphism**:
+
+- **Backdrop Blur**: Creates a frosted glass effect
+  ```css
+  backdrop-filter: blur(10px);
+  ```
+  This blurs everything behind the card, like looking through textured glass.
+
+- **Transparency**: Cards are semi-transparent
+  ```css
+  background: rgba(255, 255, 255, 0.9);
+  ```
+  The `0.9` means 90% opaque (10% see-through).
+
+- **Gradients**: Smooth color transitions
+  ```css
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  ```
+  This creates a purple-to-pink diagonal gradient.
+
+- **Shadows**: Multiple layers of shadows create depth
+  ```css
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05);
+  ```
+  The first shadow is large and soft, the second is small and sharp.
+
+## 📁 File Structure Explained
+
+```
+voice-recording-app/
+│
+├── server.js                    # Main server file (the brain)
+│   ├── Sets up Express server
+│   ├── Configures AWS S3 connection
+│   ├── Handles file uploads
+│   ├── Manages transcription requests
+│   └── Serves the frontend files
+│
+├── public/                      # Frontend files (what users see)
+│   ├── index.html              # The main page structure
+│   ├── styles.css              # All the beautiful styling
+│   ├── app.js                  # Main JavaScript controller
+│   ├── recorder.js             # Handles recording logic
+│   ├── uploader.js             # Handles file uploads
+│   └── player.js               # Handles audio playback
+│
+├── package.json                 # Lists all the dependencies
+│   └── Dependencies are code libraries other people wrote
+│       that we use (like Express, AWS SDK, OpenAI)
+│
+├── .env                         # Secret configuration (not in git)
+│   ├── OPENAI_API_KEY          # Your OpenAI API key
+│   └── Other environment settings
+│
+└── voice-recording-api-user_accessKeys.csv
+    └��─ AWS credentials to access S3 bucket
+```
+
+## 🎨 Key Features Explained
+
+### 1. Automatic Transcription
+
+**What It Does**: Converts your voice to text automatically after recording.
+
+**How It Works**:
+- When you finish a recording, the app automatically calls the `/api/transcribe` endpoint
+- The server downloads your audio from S3
+- It sends the audio to OpenAI's Whisper API with a simple request
+- Whisper returns the transcription in about 2-5 seconds (depending on recording length)
+- The transcription appears with a beautiful "AI-Powered" badge
+
+**The Code Flow**:
+```javascript
+// 1. User stops recording → audio is uploaded
+// 2. app.js automatically calls:
+fetch('/api/transcribe', {
+  method: 'POST',
+  body: JSON.stringify({ fileUrl: audioUrl })
+})
+
+// 3. server.js receives request and calls OpenAI:
+const transcription = await openai.audio.transcriptions.create({
+  file: audioFileStream,
+  model: "whisper-1"
+})
+
+// 4. Returns text back to browser
+```
+
+### 2. Cloud Storage with AWS S3
+
+**What It Does**: Stores your audio files permanently in the cloud.
+
+**Why S3?**:
+- **Reliability**: Amazon guarantees 99.999999999% (11 nines) durability
+- **Scalability**: Can store unlimited files
+- **Speed**: Fast downloads from anywhere in the world
+- **Cost**: Pay only for what you use (pennies per GB)
+
+**The Upload Process**:
+1. Your audio file (Blob) is converted to a Buffer (raw binary data)
+2. The server creates a unique filename: `recording-[timestamp]-[random].webm`
+3. The AWS SDK sends a `PutObjectCommand` to S3
+4. S3 stores the file and returns a URL like:
+   `https://voice-recording-app.s3.amazonaws.com/recording-1234567890-abc.webm`
+
+### 3. Beautiful Dark/Light Theme
+
+**What It Does**: Adapts the entire interface based on your system preference.
+
+**How It Works**:
+```javascript
+// Detects your system theme
+const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+// Applies different CSS classes
+document.body.classList.toggle('dark-theme', isDarkMode);
+```
+
+**CSS Variables** change based on theme:
+```css
+/* Light theme */
+--bg-primary: #fafbfc;
+--text-primary: #1a1a1a;
+
+/* Dark theme */
+--bg-primary: #0a0e1a;
+--text-primary: #ffffff;
+```
+
+This means one CSS rule works for both themes:
+```css
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+```
+
+### 4. Real-Time Progress Tracking
+
+**What It Does**: Shows you exactly what's happening at every step.
+
+**Upload Progress**:
+```javascript
+xhr.upload.addEventListener('progress', (e) => {
+  const percent = (e.loaded / e.total) * 100;
+  updateProgressBar(percent);
+});
+```
+- `e.loaded`: Bytes uploaded so far
+- `e.total`: Total bytes to upload
+- Updates the progress bar every few milliseconds
+
+**Transcription Loading**:
+```javascript
+showLoadingState('Transcribing audio...');
+// Shows animated spinner
+// Replaces with transcription when done
+```
+
+### 5. Copy & Download Transcriptions
+
+**Copy to Clipboard**:
+```javascript
+navigator.clipboard.writeText(transcriptionText)
+  .then(() => showSuccessMessage('Copied!'));
+```
+Uses the modern Clipboard API to copy text without Flash or special permissions.
+
+**Download as File**:
+```javascript
+const blob = new Blob([transcriptionText], { type: 'text/plain' });
+const url = URL.createObjectURL(blob);
+const link = document.createElement('a');
+link.href = url;
+link.download = 'transcription.txt';
+link.click();
+```
+Creates a temporary download link and simulates clicking it.
+
+## 🔐 Security Features
+
+### 1. API Key Protection
+
+**The Problem**: If you put your OpenAI API key in the frontend JavaScript, anyone can steal it and rack up charges on your account.
+
+**The Solution**:
+- API keys are stored in `.env` file (never committed to GitHub)
+- Only the server (backend) has access to the keys
+- Frontend makes requests to the server, server calls OpenAI
+- Users never see the API key
+
+### 2. Rate Limiting
+
+**The Problem**: Someone could spam your server with thousands of requests.
+
+**The Solution**:
+```javascript
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 100                    // 100 requests per 15 minutes
+});
+```
+After 100 requests in 15 minutes, the server responds with "Too many requests."
+
+### 3. CORS (Cross-Origin Resource Sharing)
+
+**The Problem**: By default, browsers block requests from one website to another.
+
+**The Solution**:
+```javascript
+app.use(cors({
+  origin: '*',  // Allow requests from anywhere
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS']
+}));
+```
+This tells browsers: "It's okay for this frontend to talk to this backend."
+
+### 4. File Validation
+
+**The Problem**: Someone could try to upload a virus disguised as an audio file.
+
+**The Solution**: The app only accepts specific MIME types:
+```javascript
+upload.single('audio')  // Only accepts audio/* files
+```
+
+## ⚙️ Setup Instructions (Step by Step)
+
+### Prerequisites
+
+You'll need these installed on your computer:
+
+1. **Node.js** (version 18 or higher)
+   - Download from: https://nodejs.org
+   - Check version: `node --version`
+
+2. **An AWS Account** (for S3 storage)
+   - Sign up at: https://aws.amazon.com
+   - Free tier includes 5GB of storage
+
+3. **An OpenAI Account** (for transcription)
+   - Sign up at: https://platform.openai.com
+   - You'll need to add payment info, but costs are minimal
+
+### Step 1: Clone or Download the Project
+
+```bash
+# If using Git:
+git clone <repository-url>
+cd voice-recording-app
+
+# If downloaded as ZIP:
+# Extract the ZIP and open terminal in that folder
+```
+
+### Step 2: Install Dependencies
+
 ```bash
 npm install
 ```
 
-This command reads the `package.json` file (like a shopping list) and downloads all necessary components:
-- **Express**: Handles web server operations
-- **AWS SDK**: Communicates with Amazon S3
-- **OpenAI**: Connects to AI services
-- **Multer**: Handles file uploads
-- And several others for security, formatting, and functionality
+**What This Does**:
+- Reads `package.json` to see what libraries are needed
+- Downloads all dependencies from NPM (Node Package Manager)
+- Creates a `node_modules` folder with all the code libraries
 
-### **Step 3: Configure Your Credentials**
+**Dependencies Explained**:
+- `express`: Web server framework
+- `@aws-sdk/client-s3`: Talk to Amazon S3
+- `openai`: Talk to OpenAI API
+- `multer`: Handle file uploads
+- `cors`: Enable cross-origin requests
+- `dotenv`: Load environment variables from `.env`
 
-#### **Create the .env file**
-Copy the `.env.example` file and rename it to `.env`. Then fill in your information:
+### Step 3: Set Up AWS S3
 
-```
-OPENAI_API_KEY=sk-your-actual-key-here
-PORT=3001
-```
+1. **Create an S3 Bucket**:
+   - Go to AWS Console → S3
+   - Click "Create bucket"
+   - Name it `voice-recording-app` (or update `BUCKET_NAME` in server.js)
+   - Region: `us-east-1` (or update `REGION` in server.js)
+   - Uncheck "Block all public access" (we need files to be accessible)
+   - Create bucket
 
-**What each setting means:**
-- `OPENAI_API_KEY`: Your password to use OpenAI's AI services
-- `PORT`: The "door number" where the app runs on your computer (3001 is the default)
+2. **Configure CORS** (so browsers can access files):
+   ```bash
+   node setup-s3-cors.js
+   ```
+   This sets rules allowing browsers to download audio from S3.
 
-#### **Add Your AWS Credentials File**
-Place your AWS credentials CSV file (named `voice-recording-api-user_accessKeys.csv`) in the app's main folder. This file contains:
-- **Access Key ID**: Like a username for S3
-- **Secret Access Key**: Like a password for S3
+3. **Configure Bucket Policy** (so files can be read):
+   ```bash
+   node setup-bucket-policy.js
+   ```
+   This makes files in the bucket publicly readable.
 
-The app reads this file automatically when it starts.
+4. **Get AWS Credentials**:
+   - AWS Console → IAM → Users → Create User
+   - Give it `AmazonS3FullAccess` permission
+   - Create access key → Download CSV
+   - Save CSV as `voice-recording-api-user_accessKeys.csv` in project root
 
-### **Step 4: Start The App**
-Run one of these commands:
+### Step 4: Get OpenAI API Key
 
-**For normal use:**
+1. Go to https://platform.openai.com/api-keys
+2. Click "Create new secret key"
+3. Copy the key (starts with `sk-`)
+4. Create a file named `.env` in project root
+5. Add this line:
+   ```
+   OPENAI_API_KEY=sk-your-key-here
+   ```
+
+### Step 5: Start the Server
+
 ```bash
 npm start
 ```
 
-**For development (auto-restarts when you change code):**
-```bash
-npm run dev
+**What Happens**:
+- Server starts on port 3001
+- Loads AWS credentials from CSV
+- Loads OpenAI key from `.env`
+- Starts listening for requests
+- You'll see: `Server running on port 3001`
+
+### Step 6: Open the App
+
+Open your browser and go to:
+```
+http://localhost:3001
 ```
 
-You'll see a message like: `Server running on http://localhost:3001`
+You should see the beautiful voice recording interface!
 
-### **Step 5: Open In Your Browser**
-Open your web browser and go to: `http://localhost:3001`
+## 🎯 How to Use the App
 
-You should see the beautiful voice recording interface ready to use!
+### Recording Your First Audio
 
----
+1. **Click the "Start Recording" button**
+   - Your browser will ask for microphone permission → Click "Allow"
+   - The button will change to "Stop Recording" with a pulsing animation
 
-## 🎯 How To Use The App
+2. **Speak into your microphone**
+   - Talk clearly for best transcription results
+   - You'll see a waveform showing your voice
 
-### **Recording Your First Audio**
-1. Click the big red **"Start Recording"** button
-2. Your browser will ask permission to use your microphone—click "Allow"
-3. Speak clearly into your microphone
-4. Watch the timer count up and the waveform dance to your voice
-5. Click **"Stop Recording"** when you're done
-6. The app automatically saves your recording to the cloud
+3. **Click "Stop Recording"**
+   - The recording stops
+   - Upload begins automatically
+   - You'll see a progress bar
 
-### **Viewing Your Transcription**
-1. After a recording is saved, transcription happens automatically
-2. Wait a few seconds while the AI processes your audio
-3. The transcript appears below your recording with a beautiful "AI Powered" badge
-4. If AI titles are enabled, you'll see a suggested title at the top
+4. **Wait for transcription**
+   - After upload completes, transcription starts automatically
+   - You'll see "Transcribing audio..." with a spinner
+   - In a few seconds, your transcription appears
 
-### **Managing Your Recordings**
-Each recording in your list has action buttons:
-- **▶️ Play**: Listen to the recording right in the browser
-- **⬇️ Download**: Save a copy to your computer
-- **🔗 Share**: Copy the web link to share with others
-- **🗑️ Delete**: Remove the recording permanently
+5. **Interact with your recording**:
+   - **Play**: Click play button to listen
+   - **Copy**: Click "Copy" to copy transcription to clipboard
+   - **Download**: Click "Download" to save transcription as .txt
+   - **Share**: Copy the URL to share with others
 
-### **Copying or Downloading Transcripts**
-Under each transcript, you'll find buttons to:
-- **Copy**: Put the text on your clipboard to paste elsewhere
-- **Download**: Save the transcript as a text file
+## 🐛 Troubleshooting
 
-### **Using the Search Feature**
-Type keywords into the search box to filter recordings by title or date.
+### Microphone Not Working
 
----
+**Problem**: Browser won't access microphone
+**Solution**:
+- Check browser permissions (click lock icon in address bar)
+- Try HTTPS instead of HTTP (required on some browsers)
+- Try a different browser (Chrome and Firefox work best)
 
-## ⚙️ Advanced Configuration Options
+### Upload Fails
 
-### **Customizing AI Title Generation**
+**Problem**: File won't upload to S3
+**Solution**:
+- Check AWS credentials in CSV file
+- Verify bucket name matches in server.js
+- Check bucket exists and is in correct region
+- Verify bucket policy and CORS are configured
 
-You can fine-tune how the AI creates titles by adding these settings to your `.env` file:
+### Transcription Fails
 
+**Problem**: "Transcription failed" message
+**Solution**:
+- Check OpenAI API key in `.env`
+- Verify you have credits in your OpenAI account
+- Check server logs for error details
+- Try a shorter recording first (under 30 seconds)
+
+### Server Won't Start
+
+**Problem**: Error starting server
+**Solution**:
+- Ensure Node.js 18+ is installed: `node --version`
+- Run `npm install` to install dependencies
+- Check port 3001 isn't already in use
+- Verify `.env` and CSV files exist
+
+## 💡 Advanced Features
+
+### Environment Variables
+
+Create a `.env` file to customize behavior:
+
+```env
+# Required
+OPENAI_API_KEY=sk-your-key-here
+
+# Optional
+PORT=3001                           # Server port
+OPENAI_TITLE_MODEL=gpt-4.1-mini     # Model for AI titles
+ENABLE_AI_TITLES=true               # Auto-generate titles
+AI_TITLE_TEMPERATURE=0.2            # Creativity (0-2)
+AI_TITLE_MAX_TOKENS=20              # Max title length
 ```
-# Control AI Title Generation
-ENABLE_AI_TITLES=true
-OPENAI_TITLE_MODEL=gpt-4.1-mini
-AI_TITLE_TEMPERATURE=0.2
-AI_TITLE_MAX_TOKENS=20
-AI_TITLE_PROMPT=Summarize the following transcript in 1 to 4 words. Return only the concise title.
+
+### Audio Enhancement (Optional)
+
+If you have Python and audio processing libraries:
+
+```env
+ENABLE_AUDIO_ENHANCEMENT=true
+AUDIO_ENHANCEMENT_SCRIPT=./scripts/enhance_audio.py
 ```
 
-**What each setting controls:**
+This will clean up background noise before transcription.
 
-- **ENABLE_AI_TITLES**: Turn title generation on (`true`) or off (`false`)
-- **OPENAI_TITLE_MODEL**: Which AI model to use (gpt-4.1-mini is fast and affordable)
-- **AI_TITLE_TEMPERATURE**: How creative the AI should be (0.0 = very focused, 1.0 = very creative)
-- **AI_TITLE_MAX_TOKENS**: Maximum number of words in the title
-- **AI_TITLE_PROMPT**: The instruction given to the AI about how to create titles
+## 📊 API Endpoints Reference
 
-### **Changing The Server Port**
+### POST /api/upload
+Upload an audio file to S3.
 
-If another program is using port 3001, change it in your `.env` file:
+**Request**:
+- Content-Type: multipart/form-data
+- Body: audio file (field name: "audio")
+
+**Response**:
+```json
+{
+  "success": true,
+  "fileUrl": "https://voice-recording-app.s3.amazonaws.com/recording-123.webm",
+  "message": "File uploaded successfully"
+}
 ```
-PORT=8080
+
+### POST /api/transcribe
+Transcribe an audio file using OpenAI Whisper.
+
+**Request**:
+```json
+{
+  "fileUrl": "https://voice-recording-app.s3.amazonaws.com/recording-123.webm"
+}
 ```
 
-Then access the app at `http://localhost:8080`
+**Response**:
+```json
+{
+  "success": true,
+  "transcription": "This is what you said in the recording.",
+  "language": "en",
+  "duration": 15.5
+}
+```
+
+### GET /api/health
+Check server status.
+
+**Response**:
+```json
+{
+  "status": "ok",
+  "bucket": "voice-recording-app",
+  "region": "us-east-1",
+  "features": {
+    "transcription": true,
+    "audioEnhancement": false
+  }
+}
+```
+
+## 🚀 Deployment to Production
+
+### Deploy to Heroku
+
+1. Create Heroku account
+2. Install Heroku CLI
+3. Run:
+   ```bash
+   heroku create your-app-name
+   heroku config:set OPENAI_API_KEY=sk-your-key
+   git push heroku main
+   ```
+
+### Deploy to AWS EC2
+
+1. Launch EC2 instance (Ubuntu)
+2. SSH into instance
+3. Install Node.js
+4. Clone repository
+5. Run with PM2:
+   ```bash
+   npm install -g pm2
+   pm2 start server.js
+   pm2 startup
+   pm2 save
+   ```
+
+### Environment Variables in Production
+
+Never commit `.env` or CSV files to Git!
+- Use Heroku Config Vars
+- Use AWS Systems Manager Parameter Store
+- Use environment variables on your hosting platform
+
+## 📝 Code Examples
+
+### Adding a New Feature: Saving Recordings Locally
+
+**Frontend (app.js)**:
+```javascript
+async function saveRecordingLocally(audioBlob) {
+  // Create a download link
+  const url = URL.createObjectURL(audioBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `recording-${Date.now()}.webm`;
+  a.click();
+
+  // Clean up
+  URL.revokeObjectURL(url);
+}
+
+// Call after recording stops:
+saveRecordingLocally(recordedBlob);
+```
+
+### Adding a New Feature: Email Transcription
+
+**Backend (server.js)**:
+```javascript
+const nodemailer = require('nodemailer');
+
+app.post('/api/email-transcription', async (req, res) => {
+  const { email, transcription } = req.body;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+
+  await transporter.sendMail({
+    to: email,
+    subject: 'Your Transcription',
+    text: transcription
+  });
+
+  res.json({ success: true });
+});
+```
+
+## 🎓 Learning Resources
+
+### Understanding the Technologies
+
+- **JavaScript**: https://javascript.info
+- **Node.js**: https://nodejs.dev/learn
+- **Express**: https://expressjs.com/en/starter/installing.html
+- **AWS S3**: https://docs.aws.amazon.com/s3/
+- **OpenAI API**: https://platform.openai.com/docs
+
+### How Audio Works on the Web
+
+- **MediaRecorder API**: https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder
+- **Web Audio API**: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+- **Audio Formats**: WebM, MP4, WAV explained
+
+## 🤝 Contributing
+
+Want to improve this app? Here's how:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b amazing-feature`
+3. Make your changes
+4. Test thoroughly
+5. Commit: `git commit -m "Add amazing feature"`
+6. Push: `git push origin amazing-feature`
+7. Create a Pull Request
+
+## 📜 License
+
+This project is open source and available under the ISC License.
+
+## 🎉 Credits
+
+Built with:
+- **OpenAI Whisper**: State-of-the-art speech recognition
+- **AWS S3**: Reliable cloud storage
+- **Express.js**: Fast, minimalist web framework
+- **Modern CSS**: Glassmorphism design trend
 
 ---
 
-## 🔒 Privacy & Security Features
+**Made with ❤️ to make voice recording and transcription accessible to everyone!**
 
-### **Rate Limiting**
-The app prevents abuse by limiting how many requests can be made in a short time. This protects your OpenAI and AWS accounts from accidental overuse.
-
-### **File Type Validation**
-Only audio files are accepted—the app checks every upload to ensure it's a valid audio format (.webm, .mp3, .wav, .ogg, .m4a).
-
-### **Secure Cloud Storage**
-Your recordings are stored in AWS S3 with:
-- Encryption at rest (files are scrambled when stored)
-- Unique URLs that are difficult to guess
-- Access controls you can customize in your AWS dashboard
-
-### **Environment Variables**
-Sensitive information (API keys, AWS credentials) is kept in separate files that are never uploaded to GitHub or shared publicly.
-
----
-
-## 📱 Technical Architecture (For The Curious)
-
-### **Frontend (What You See)**
-Built with pure HTML, CSS, and JavaScript:
-- **HTML**: Structures the page layout
-- **CSS**: Creates the beautiful visual design with animations
-- **JavaScript**: Handles recording, playback, uploads, and user interactions
-
-### **Backend (The Server)**
-Built with Node.js and Express:
-- Serves the web interface
-- Handles file uploads
-- Communicates with AWS S3
-- Coordinates with OpenAI's API
-- Manages recordings database
-
-### **Cloud Services**
-- **AWS S3**: Stores audio files permanently
-- **OpenAI Whisper**: Transcribes audio to text
-- **OpenAI GPT**: Generates intelligent titles
-
-### **Audio Recording Technology**
-Uses the browser's MediaRecorder API to capture audio directly from your microphone without needing any plugins or extensions.
-
----
-
-## 🐛 Troubleshooting Common Issues
-
-### **"Permission Denied" When Recording**
-Your browser blocked microphone access. Click the camera/microphone icon in your browser's address bar and allow access.
-
-### **"OpenAI API Key Not Found"**
-Make sure:
-1. You created a `.env` file (not `.env.example`)
-2. Your API key is correctly pasted after `OPENAI_API_KEY=`
-3. There are no extra spaces or quotes around the key
-4. You restarted the server after creating/editing the `.env` file
-
-### **"AWS Credentials Error"**
-Check that:
-1. Your CSV file is named exactly `voice-recording-api-user_accessKeys.csv`
-2. The file is in the app's root folder (same place as `server.js`)
-3. The CSV format matches AWS's export format
-
-### **"Cannot Connect to Server"**
-Ensure:
-1. The server is running (you should see "Server running on http://localhost:3001")
-2. You're visiting the correct URL in your browser
-3. No other program is using port 3001
-
-### **Recordings Upload But Don't Transcribe**
-This usually means:
-1. Your OpenAI API key is invalid or expired
-2. You've exceeded your OpenAI usage limits
-3. OpenAI's servers are temporarily down
-
-Check your OpenAI dashboard to verify your account status and usage.
-
----
-
-## 💰 Cost Considerations
-
-### **OpenAI Pricing**
-- **Whisper**: ~$0.006 per minute of audio
-- **GPT Title Generation**: ~$0.0001 per title
-
-For typical use (a few recordings per day), you'll spend less than $1 per month.
-
-### **AWS S3 Pricing**
-- **Storage**: ~$0.023 per GB per month
-- **Data Transfer**: First 100GB free per month
-
-100 hours of high-quality audio recordings uses about 1GB of storage, costing ~$0.02 per month.
-
-**Total estimated cost**: Less than $2/month for regular personal use.
-
----
-
-## 🎓 Learning More
-
-### **Want to customize the design?**
-All visual styling is in `public/styles.css`. You can change colors, fonts, animations, and layout without knowing much code.
-
-### **Want to add features?**
-- Frontend logic: `public/app.js`
-- Backend logic: `server.js`
-- Page structure: `public/index.html`
-
-### **Resources to learn more:**
-- [MDN Web Docs](https://developer.mozilla.org) for HTML/CSS/JavaScript
-- [Node.js Documentation](https://nodejs.org/docs) for server-side development
-- [AWS S3 Guide](https://docs.aws.amazon.com/s3) for cloud storage
-- [OpenAI API Docs](https://platform.openai.com/docs) for AI features
-
----
-
-## 📄 License
-
-This project is open source under the ISC License, which means you're free to use, modify, and share it however you like.
-
----
-
-## 🙏 Credits
-
-This app is powered by:
-- **OpenAI** for incredible AI transcription and language understanding
-- **Amazon Web Services** for reliable cloud storage
-- **Node.js** for the server foundation
-- **The web community** for countless open-source tools and libraries
-
----
-
-## 💡 Ideas For Enhancement
-
-Some features you could add:
-- Support for multiple languages in transcription
-- Folders or tags to organize recordings
-- Collaborative features (share recordings with specific people)
-- Integration with note-taking apps
-- Voice commands to control the app hands-free
-- Analytics showing your recording patterns over time
-
----
-
-**Enjoy recording! 🎙️✨**
+If you have questions, found a bug, or want to request a feature, please open an issue on GitHub!
