@@ -53,7 +53,7 @@ app.use(express.static('public', {
 // AWS Configuration
 let s3Client;
 let awsCredentials = null;
-const BUCKET_NAME = 'voice-recording-app';
+const BUCKET_NAME = 'voice-recording-app-1759786441';
 const REGION = 'us-east-1';
 const DEFAULT_TITLE_MODEL = process.env.OPENAI_TITLE_MODEL || 'gpt-4.1-mini';
 const AI_TITLE_ENABLED = process.env.ENABLE_AI_TITLES !== 'false';
@@ -67,7 +67,7 @@ const AUDIO_ENHANCEMENT_OUTPUT_SUFFIX = process.env.AUDIO_ENHANCEMENT_OUTPUT_SUF
 // Read AWS credentials from CSV file
 function loadAWSCredentials() {
   try {
-    const csvPath = path.join(__dirname, 'voice-recording-api-user_accessKeys.csv');
+    const csvPath = path.join(__dirname, 'rootkey.csv');
     const csvContent = fs.readFileSync(csvPath, 'utf-8');
 
     // Remove BOM if present
@@ -123,7 +123,31 @@ function loadAWSCredentials() {
 }
 
 // Initialize AWS on startup
-if (!loadAWSCredentials()) {
+function initializeAWS() {
+  // First try environment variables
+  if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    s3Client = new S3Client({
+      region: process.env.AWS_REGION || REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+      }
+    });
+    
+    awsCredentials = {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    };
+    
+    console.log('✓ AWS credentials loaded from environment variables');
+    return true;
+  }
+  
+  // Fallback to CSV file
+  return loadAWSCredentials();
+}
+
+if (!initializeAWS()) {
   console.error('Failed to load AWS credentials. Server will not start.');
   process.exit(1);
 }
